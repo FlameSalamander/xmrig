@@ -228,14 +228,19 @@ bool xmrig::BlockTemplate::parse(bool hashes)
     ar(m_amount);
     ar(m_outputType);
 
-    // output type must be txout_to_key (2)
-    if (m_outputType != 2) {
+    // output type must be txout_to_key (2) or txout_to_tagged_key (3)
+    if ((m_outputType != 2) && (m_outputType != 3)) {
         return false;
     }
 
     setOffset(EPH_PUBLIC_KEY_OFFSET, ar.index());
 
     ar(m_ephPublicKey, kKeySize);
+
+    if (m_outputType == 3) {
+        ar(m_viewTag);
+    }
+
     ar(m_extraSize);
 
     setOffset(TX_EXTRA_OFFSET, ar.index());
@@ -250,7 +255,7 @@ bool xmrig::BlockTemplate::parse(bool hashes)
         ar_extra(extra_tag);
 
         switch (extra_tag) {
-        case 0x01: // TX_EXTRA_TAG_PUBKEY        
+        case 0x01: // TX_EXTRA_TAG_PUBKEY
             setOffset(TX_PUBKEY_OFFSET, offset(TX_EXTRA_OFFSET) + ar_extra.index());
             ar_extra.skip(kKeySize);
             break;
